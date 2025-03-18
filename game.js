@@ -86,3 +86,32 @@ function joinGame(code) {
     console.log('Joining game with code:', code);
     // Example: Use PeerJS to connect to the host Peer ID
 }
+
+const playerList = document.getElementById('player-list');
+
+// Example function to add a player
+function addPlayer(playerName) {
+    const listItem = document.createElement('li');
+    listItem.textContent = playerName;
+    playerList.appendChild(listItem);
+}
+
+// Example function to remove a player
+function removePlayer(playerName) {
+    const items = playerList.getElementsByTagName('li');
+    for (let item of items) {
+        if (item.textContent === playerName) {
+            playerList.removeChild(item);
+            break;
+        }
+    }
+}
+
+// Example: Simulate players joining
+addPlayer('Player 1');
+addPlayer('Player 2');
+
+// Example: Simulate a player leaving
+setTimeout(() => {
+    removePlayer('Player 1');
+}, 5000);
