@@ -107,11 +107,11 @@ function removePlayer(playerName) {
     }
 }
 
-// Example: Simulate players joining
-addPlayer('Player 1');
-addPlayer('Player 2');
+peer.on('connection', (conn) => {
+    const playerName = conn.peer; // Use the peer ID as the player's name
+    addPlayer(playerName);
 
-// Example: Simulate a player leaving
-setTimeout(() => {
-    removePlayer('Player 1');
-}, 5000);
+    conn.on('close', () => {
+        removePlayer(playerName);
+    });
+});
