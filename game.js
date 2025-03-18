@@ -68,3 +68,21 @@ function joinGame(inputCode) {
         alert('Invalid session code');
     }
 }
+
+
+document.getElementById('join-button').addEventListener('click', () => {
+    const sessionCode = document.getElementById('session-code').value.trim();
+    if (sessionCode) {
+        console.log('Attempting to join session:', sessionCode);
+        // Add logic to connect to the game using the session code
+        joinGame(sessionCode);
+    } else {
+        alert('Please enter a valid session code!');
+    }
+});
+
+function joinGame(code) {
+    // Logic to connect to the host using the session code
+    console.log('Joining game with code:', code);
+    // Example: Use PeerJS to connect to the host Peer ID
+}
