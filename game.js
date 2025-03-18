@@ -23,10 +23,15 @@ function gameLoop() {
 gameLoop();
 
 
-const peer = new Peer(); // Create a new peer connection
+const peer = new Peer();
 peer.on('open', (id) => {
-    console.log('My peer ID is:', id);
+    console.log('Your Peer ID:', id);
+
+    // Map session code to Peer ID
+    const sessionMap = {};
+    sessionMap[sessionCode] = id;
 });
+
 
 // Connect to another peer
 const conn = peer.connect('another-peer-id');
@@ -37,3 +42,29 @@ conn.on('open', () => {
 conn.on('data', (data) => {
     console.log('Received:', data);
 });
+
+function generateCode(length = 6) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < length; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// Example usage
+const sessionCode = generateCode();
+console.log('Your session code:', sessionCode);
+
+
+function joinGame(inputCode) {
+    const hostPeerId = sessionMap[inputCode]; // Retrieve Peer ID from the code
+    if (hostPeerId) {
+        const conn = peer.connect(hostPeerId);
+        conn.on('open', () => {
+            console.log('Connected to host');
+        });
+    } else {
+        alert('Invalid session code');
+    }
+}
