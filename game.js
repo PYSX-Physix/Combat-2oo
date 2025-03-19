@@ -44,7 +44,7 @@ const inventoryList = document.getElementById("inventoryList");
   signInButton.addEventListener("click", async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(provider);
+      await signInWithPopup(auth, provider);
       console.log("Signed in!");
     } catch (error) {
       console.error("Error signing in:", error);
