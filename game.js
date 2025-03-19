@@ -185,3 +185,7 @@ const inventoryList = document.getElementById("inventoryList");
     savePlayerData(auth.currentUser.uid);
     updateUI();
   }
+
+// Example weapon object
+const sword = { name: "Sword", damage: 15 };
+addItemToInventory(sword);
