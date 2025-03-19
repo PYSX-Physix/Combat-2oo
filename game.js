@@ -89,7 +89,17 @@ const inventoryList = document.getElementById("inventoryList");
       const data = docSnap.data();
       player = { ...player, ...data };
       // Deserialize inventory items
-      player.inventory = player.inventory.map(item => JSON.parse(item));
+      player.inventory = player.inventory.map(item => {
+        if (typeof item === 'string') {
+          try {
+            return JSON.parse(item);
+          } catch (e) {
+            console.error("Error parsing inventory item:", item, e);
+            return item;
+          }
+        }
+        return item;
+      });
       console.log("Player data loaded:", player);
     } else {
       console.log("No player data found. Creating new profile...");
@@ -121,7 +131,7 @@ const inventoryList = document.getElementById("inventoryList");
       Defense: ${player.defense}
     `;
     inventoryList.innerHTML = player.inventory.map(item => {
-      const weapon = JSON.parse(item);
+      const weapon = item; // No need to parse again, already deserialized
       return `<li>${weapon.name} (Damage: ${weapon.damage})</li>`;
     }).join("");
   }
@@ -170,7 +180,7 @@ const inventoryList = document.getElementById("inventoryList");
   
   // Inventory
   function addItemToInventory(item) {
-    player.inventory.push(JSON.stringify(item));
+    player.inventory.push(item); // Store as object
     console.log(`${item.name} added to inventory.`);
     savePlayerData(auth.currentUser.uid);
     updateUI();
