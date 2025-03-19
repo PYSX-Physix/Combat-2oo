@@ -98,6 +98,8 @@ const inventoryList = document.getElementById("inventoryList");
           return null;
         }
       }));
+      // Filter out any null values
+      player.inventory = player.inventory.filter(item => item !== null);
       console.log("Player data loaded:", player);
     } else {
       console.log("No player data found. Creating new profile...");
@@ -180,10 +182,10 @@ const inventoryList = document.getElementById("inventoryList");
     const itemDoc = await getDoc(doc(db, itemRef));
     if (itemDoc.exists()) {
       const item = itemDoc.data();
-      player.inventory.push(item); // Store as object
+      player.inventory.push({ ...item, path: itemRef }); // Store as object with path
       console.log(`${item.name} added to inventory.`);
       if (auth.currentUser) {
-        savePlayerData(auth.currentUser.uid);
+        await savePlayerData(auth.currentUser.uid);
       } else {
         console.error("No user signed in. Cannot save player data.");
       }
