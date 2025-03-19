@@ -9,17 +9,20 @@
 <body>
   <h1>Online RPG</h1>
   <div id="authContainer">
-    <button id="signInButton">Sign in with Google</button>
-    <button id="signOutButton" style="display: none;">Sign Out</button>
+    <button id="signInButton">Sign In</button>
+    <button id="signOutButton" style="display:none;">Sign Out</button>
   </div>
-  <div id="ui" style="display: none;">
+  <div id="ui" style="display:none;">
     <h3>Player Stats</h3>
-    <p id="playerStats"></p>
+    <div id="playerStats"></div>
     <h3>Combat</h3>
     <button onclick="attackEnemy()">Attack Enemy</button>
     <h3>Inventory</h3>
     <ul id="inventoryList"></ul>
     <button onclick="addItemToInventory('Potion')">Add Potion</button>
+    <input type="text" id="joinCodeInput" placeholder="Enter join code">
+    <button id="joinSessionButton">Join Session</button>
+    <button id="createSessionButton">Create Session</button>
   </div>
   <canvas id="gameCanvas" width="800" height="600"></canvas>
   <script src="game.js" type="module"></script>
