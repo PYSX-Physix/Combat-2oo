@@ -88,25 +88,23 @@ const inventoryList = document.getElementById("inventoryList");
     if (docSnap.exists()) {
       const data = docSnap.data();
       player = { ...player, ...data };
-      // Deserialize inventory items
-      player.inventory = player.inventory.map(item => {
-        if (typeof item === 'string') {
-          try {
-            return JSON.parse(item);
-          } catch (e) {
-            console.error("Error parsing inventory item:", item, e);
-            return item;
-          }
+      // Fetch weapon data for inventory items
+      player.inventory = await Promise.all(player.inventory.map(async itemRef => {
+        const itemDoc = await getDoc(doc(db, itemRef));
+        if (itemDoc.exists()) {
+          return itemDoc.data();
+        } else {
+          console.error("Weapon data not found for reference:", itemRef);
+          return null;
         }
-        return item;
-      });
+      }));
       console.log("Player data loaded:", player);
     } else {
       console.log("No player data found. Creating new profile...");
       await setDoc(docRef, {
         ...player,
-        // Serialize inventory items
-        inventory: player.inventory.map(item => JSON.stringify(item))
+        // Store references to weapon documents
+        inventory: player.inventory.map(item => item.path)
       });
     }
   }
@@ -116,8 +114,8 @@ const inventoryList = document.getElementById("inventoryList");
     const docRef = doc(db, "players", uid);
     await setDoc(docRef, {
       ...player,
-      // Serialize inventory items
-      inventory: player.inventory.map(item => JSON.stringify(item))
+      // Store references to weapon documents
+      inventory: player.inventory.map(item => item.path)
     });
   }
   
@@ -131,8 +129,7 @@ const inventoryList = document.getElementById("inventoryList");
       Defense: ${player.defense}
     `;
     inventoryList.innerHTML = player.inventory.map(item => {
-      const weapon = item; // No need to parse again, already deserialized
-      return `<li>${weapon.name} (Damage: ${weapon.damage})</li>`;
+      return `<li>${item.name} (Damage: ${item.damage})</li>`;
     }).join("");
   }
   
@@ -179,13 +176,23 @@ const inventoryList = document.getElementById("inventoryList");
   }
   
   // Inventory
-  function addItemToInventory(item) {
-    player.inventory.push(item); // Store as object
-    console.log(`${item.name} added to inventory.`);
-    savePlayerData(auth.currentUser.uid);
-    updateUI();
+  async function addItemToInventory(itemRef) {
+    const itemDoc = await getDoc(doc(db, itemRef));
+    if (itemDoc.exists()) {
+      const item = itemDoc.data();
+      player.inventory.push(item); // Store as object
+      console.log(`${item.name} added to inventory.`);
+      if (auth.currentUser) {
+        savePlayerData(auth.currentUser.uid);
+      } else {
+        console.error("No user signed in. Cannot save player data.");
+      }
+      updateUI();
+    } else {
+      console.error("Weapon data not found for reference:", itemRef);
+    }
   }
 
-// Example weapon object
-const sword = { name: "Sword", damage: 15 };
-addItemToInventory(sword);
+// Example weapon reference
+const swordRef = "weapons/sword-default";
+addItemToInventory(swordRef);
