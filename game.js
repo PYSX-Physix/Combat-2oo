@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const joinCodeInput = document.getElementById("joinCodeInput");
   const joinSessionButton = document.getElementById("joinSessionButton");
   const createSessionButton = document.getElementById("createSessionButton");
+  const sessionPlayersList = document.getElementById("sessionPlayersList");
 
   let player = {
     active_character: "player-default",
@@ -41,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   let currentSession = null;
+  let unsubscribeSessionListener = null;
 
   // Authentication
   signInButton.addEventListener("click", async () => {
@@ -136,49 +138,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
   }
 
-  // Combat
-  function attackEnemy() {
-    const enemy = { health: 50, attack: 8 };
-    let damage = Math.max(0, player.attack - enemy.attack);
-    enemy.health -= damage;
-
-    console.log(`You dealt ${damage} damage. Enemy health: ${enemy.health}`);
-    if (enemy.health <= 0) {
-      console.log("Enemy defeated!");
-      gainExperience(50);
-    } else {
-      enemyAttack(enemy);
-    }
+  // Update Session Players UI
+  function updateSessionPlayersUI(sessionData) {
+    sessionPlayersList.innerHTML = sessionData.players.map(player => `<li>${player.name}</li>`).join("");
   }
 
-  function enemyAttack(enemy) {
-    let damage = Math.max(0, enemy.attack - player.defense);
-    player.health -= damage;
-
-    console.log(`Enemy dealt ${damage} damage. Your health: ${player.health}`);
-    if (player.health <= 0) {
-      console.log("You were defeated...");
-    }
-
-    updateUI();
-  }
-
-  // Experience and Leveling
-  function gainExperience(xp) {
-    player.experience += xp;
-    if (player.experience >= 100) {
-      player.experience -= 100;
-      player.level++;
-      player.attack += 5;
-      player.defense += 3;
-      player.health += 20;
-      console.log(`Level up! New level: ${player.level}`);
-    }
-    savePlayerData(auth.currentUser.uid);
-    updateUI();
-  }
-
-  // Inventory
+  // Example of adding a weapon to the inventory
   async function addItemToInventory(itemRef) {
     const itemDoc = await getDoc(doc(db, itemRef));
     if (itemDoc.exists()) {
@@ -196,15 +161,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Example weapon reference
+  const swordRef = "weapons/sword-default";
+  addItemToInventory(swordRef);
+
   // Create a new session
   createSessionButton.addEventListener("click", async () => {
     const joinCode = Math.random().toString(36).substring(2, 8); // Generate a random join code
     const sessionRef = doc(db, "sessions", joinCode);
     await setDoc(sessionRef, {
-      players: [auth.currentUser.uid]
+      players: [{ uid: auth.currentUser.uid, name: auth.currentUser.displayName }]
     });
     currentSession = joinCode;
     console.log(`Session created with join code: ${joinCode}`);
+
+    // Set up real-time listener for session updates
+    if (unsubscribeSessionListener) {
+      unsubscribeSessionListener();
+    }
+    unsubscribeSessionListener = onSnapshot(sessionRef, (doc) => {
+      if (doc.exists()) {
+        updateSessionPlayersUI(doc.data());
+      }
+    });
   });
 
   // Join an existing session
@@ -214,10 +193,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const sessionDoc = await getDoc(sessionRef);
     if (sessionDoc.exists()) {
       await updateDoc(sessionRef, {
-        players: arrayUnion(auth.currentUser.uid)
+        players: arrayUnion({ uid: auth.currentUser.uid, name: auth.currentUser.displayName })
       });
       currentSession = joinCode;
       console.log(`Joined session with join code: ${joinCode}`);
+
+      // Set up real-time listener for session updates
+      if (unsubscribeSessionListener) {
+        unsubscribeSessionListener();
+      }
+      unsubscribeSessionListener = onSnapshot(sessionRef, (doc) => {
+        if (doc.exists()) {
+          updateSessionPlayersUI(doc.data());
+        }
+      });
     } else {
       console.error("Session not found for join code:", joinCode);
     }
