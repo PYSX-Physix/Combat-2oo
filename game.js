@@ -92,7 +92,7 @@ const inventoryList = document.getElementById("inventoryList");
       player.inventory = await Promise.all(player.inventory.map(async itemRef => {
         const itemDoc = await getDoc(doc(db, itemRef));
         if (itemDoc.exists()) {
-          return itemDoc.data();
+          return { ...itemDoc.data(), path: itemRef };
         } else {
           console.error("Weapon data not found for reference:", itemRef);
           return null;
@@ -117,7 +117,7 @@ const inventoryList = document.getElementById("inventoryList");
     await setDoc(docRef, {
       ...player,
       // Store references to weapon documents
-      inventory: player.inventory.map(item => item.path)
+      inventory: player.inventory.map(item => item.path).filter(path => path !== undefined)
     });
   }
   
@@ -182,10 +182,10 @@ const inventoryList = document.getElementById("inventoryList");
     const itemDoc = await getDoc(doc(db, itemRef));
     if (itemDoc.exists()) {
       const item = itemDoc.data();
-      player.inventory.push(item); // Store as object
+      player.inventory.push({ ...item, path: itemRef }); // Store as object with path
       console.log(`${item.name} added to inventory.`);
       if (auth.currentUser) {
-        savePlayerData(auth.currentUser.uid);
+        await savePlayerData(auth.currentUser.uid);
       } else {
         console.error("No user signed in. Cannot save player data.");
       }
