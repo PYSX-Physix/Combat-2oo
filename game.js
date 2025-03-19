@@ -196,10 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Example weapon reference
-  const swordRef = "weapons/sword-default";
-  addItemToInventory(swordRef);
-
   // Create a new session
   createSessionButton.addEventListener("click", async () => {
     const joinCode = Math.random().toString(36).substring(2, 8); // Generate a random join code
