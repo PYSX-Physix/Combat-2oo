@@ -1,37 +1,10 @@
-body {
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #222;
-    color: #fff;
-}
-
-#game-area {
-    border: 2px solid #fff;
-    width: 800px;
-    height: 400px;
-}
-
-#player-list-container {
-    margin-top: 20px;
-    border: 1px solid #fff;
+canvas {
+    border: 1px solid black;
+  }
+  #ui {
+    margin: 20px;
+  }
+  button {
     padding: 10px;
-    background-color: #333;
-    color: #fff;
-    width: 200px;
-}
-
-#player-list {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-}
-
-#player-list li {
-    margin: 5px 0;
-    padding: 5px;
-    background-color: #444;
-    border-radius: 5px;
-}
+    margin: 5px;
+  }

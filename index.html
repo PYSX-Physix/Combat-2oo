@@ -1,39 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Combat Game</title>
-    <link rel="stylesheet" href="game.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online RPG</title>
+  <link rel="stylesheet" href="/game.css">
 </head>
 <body>
-    <div id="game-area">
-        <canvas id="gameCanvas" width="800" height="400"></canvas>
-    </div>
-
-    <div id="join-game">
-        <label for="session-code-game">Enter Session Code:</label>
-        <input type="text" id="session-code-game" placeholder="e.g., ABC123" />
-        <button id="join-button">Join Game</button>
-    </div>
-    
-    <div id="session-info">
-        <p>Session Code: <span id="session-code-game"></span></p>
-    </div>
-    <div id="player-list-container">
-        <h3>Player List:</h3>
-        <ul id="player-list">
-            <!-- Player names will be dynamically added here -->
-        </ul>
-    </div>
-    
-    
-    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-<script src="game.js"></script>
-
-<script>
-    document.getElementById('session-code-game').innerText = sessionCode;
-</script>
-
+  <h1>Online RPG</h1>
+  <div id="authContainer">
+    <button id="signInButton">Sign in with Google</button>
+    <button id="signOutButton" style="display: none;">Sign Out</button>
+  </div>
+  <div id="ui" style="display: none;">
+    <h3>Player Stats</h3>
+    <p id="playerStats"></p>
+    <h3>Combat</h3>
+    <button onclick="attackEnemy()">Attack Enemy</button>
+    <h3>Inventory</h3>
+    <ul id="inventoryList"></ul>
+    <button onclick="addItemToInventory('Potion')">Add Potion</button>
+  </div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <script src="game.js" type="module"></script>
 </body>
 </html>

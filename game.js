@@ -1,117 +1,162 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-let players = {
-    player1: { x: 50, y: 200, color: "red" },
-    player2: { x: 700, y: 200, color: "blue" }
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+  
+const firebaseConfig = {
+    apiKey: "AIzaSyChIO5CyxhiZiU0t6vtqndi6lKsWnoja8E",
+    authDomain: "combat-2pm.firebaseapp.com",
+    databaseURL: "https://combat-2pm-default-rtdb.firebaseio.com",
+    projectId: "combat-2pm",
+    storageBucket: "combat-2pm.firebasestorage.app",
+    messagingSenderId: "922835238590",
+    appId: "1:922835238590:web:4dee5fef15d0b16d0be8ef",
+    measurementId: "G-QVB6Z4DH80"
 };
 
-// Draw players
-function drawPlayers() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    Object.values(players).forEach(player => {
-        ctx.fillStyle = player.color;
-        ctx.fillRect(player.x, player.y, 50, 50);
-    });
-}
 
-// Game loop
-function gameLoop() {
-    drawPlayers();
-    requestAnimationFrame(gameLoop);
-}
-gameLoop();
-
-
-const peer = new Peer();
-peer.on('open', (id) => {
-    console.log('Your Peer ID:', id);
-
-    // Map session code to Peer ID
-    const sessionMap = {};
-    sessionMap[sessionCode] = id;
-});
-
-
-// Connect to another peer
-const conn = peer.connect('another-peer-id');
-conn.on('open', () => {
-    conn.send('Hello Player 2!');
-});
-
-conn.on('data', (data) => {
-    console.log('Received:', data);
-});
-
-function generateCode(length = 6) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
-    for (let i = 0; i < length; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore();
+const auth = getAuth();
+  
+  
+  
+  // DOM Elements
+  const authContainer = document.getElementById("authContainer");
+  const signInButton = document.getElementById("signInButton");
+  const signOutButton = document.getElementById("signOutButton");
+  const ui = document.getElementById("ui");
+  const playerStats = document.getElementById("playerStats");
+  const inventoryList = document.getElementById("inventoryList");
+  
+  let player = {
+    health: 100,
+    attack: 10,
+    defense: 5,
+    level: 1,
+    experience: 0,
+    inventory: []
+  };
+  
+  // Authentication
+  signInButton.addEventListener("click", async () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+      await auth.signInWithPopup(provider);
+      console.log("Signed in!");
+    } catch (error) {
+      console.error("Error signing in:", error);
     }
-    return code;
-}
-
-// Example usage
-const sessionCode = generateCode();
-console.log('Your session code:', sessionCode);
-
-
-function joinGame(inputCode) {
-    const hostPeerId = sessionMap[inputCode]; // Retrieve Peer ID from the code
-    if (hostPeerId) {
-        const conn = peer.connect(hostPeerId);
-        conn.on('open', () => {
-            console.log('Connected to host');
-        });
+  });
+  
+  signOutButton.addEventListener("click", async () => {
+    try {
+      await auth.signOut();
+      console.log("Signed out!");
+      ui.style.display = "none";
+      authContainer.style.display = "block";
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  });
+  
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      console.log("User signed in:", user.displayName);
+      authContainer.style.display = "none";
+      signOutButton.style.display = "block";
+      ui.style.display = "block";
+  
+      // Load player data
+      await loadPlayerData(user.uid);
+      updateUI();
     } else {
-        alert('Invalid session code');
+      console.log("No user signed in.");
+      signOutButton.style.display = "none";
+      ui.style.display = "none";
+      authContainer.style.display = "block";
     }
-}
-
-
-document.getElementById('join-button').addEventListener('click', () => {
-    const sessionCode = document.getElementById('session-code').value.trim();
-    if (sessionCode) {
-        console.log('Attempting to join session:', sessionCode);
-        // Add logic to connect to the game using the session code
-        joinGame(sessionCode);
+  });
+  
+  // Load Player Data
+  async function loadPlayerData(uid) {
+    const docRef = db.collection("players").doc(uid);
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
+      const data = docSnap.data();
+      player = { ...player, ...data };
+      console.log("Player data loaded:", player);
     } else {
-        alert('Please enter a valid session code!');
+      console.log("No player data found. Creating new profile...");
+      await docRef.set(player);
     }
-});
-
-function joinGame(code) {
-    // Logic to connect to the host using the session code
-    console.log('Joining game with code:', code);
-    // Example: Use PeerJS to connect to the host Peer ID
-}
-
-const playerList = document.getElementById('player-list');
-
-// Example function to add a player
-function addPlayer(playerName) {
-    const listItem = document.createElement('li');
-    listItem.textContent = playerName;
-    playerList.appendChild(listItem);
-}
-
-// Example function to remove a player
-function removePlayer(playerName) {
-    const items = playerList.getElementsByTagName('li');
-    for (let item of items) {
-        if (item.textContent === playerName) {
-            playerList.removeChild(item);
-            break;
-        }
+  }
+  
+  // Save Player Data
+  async function savePlayerData(uid) {
+    const docRef = db.collection("players").doc(uid);
+    await docRef.set(player);
+  }
+  
+  // Update UI
+  function updateUI() {
+    playerStats.innerHTML = `
+      Level: ${player.level}<br>
+      Experience: ${player.experience}<br>
+      Health: ${player.health}<br>
+      Attack: ${player.attack}<br>
+      Defense: ${player.defense}
+    `;
+    inventoryList.innerHTML = player.inventory.map(item => `<li>${item}</li>`).join("");
+  }
+  
+  // Combat
+  function attackEnemy() {
+    const enemy = { health: 50, attack: 8 };
+    let damage = Math.max(0, player.attack - enemy.attack);
+    enemy.health -= damage;
+  
+    console.log(`You dealt ${damage} damage. Enemy health: ${enemy.health}`);
+    if (enemy.health <= 0) {
+      console.log("Enemy defeated!");
+      gainExperience(50);
+    } else {
+      enemyAttack(enemy);
     }
-}
-
-peer.on('connection', (conn) => {
-    const playerName = conn.peer; // Use the peer ID as the player's name
-    addPlayer(playerName);
-
-    conn.on('close', () => {
-        removePlayer(playerName);
-    });
-});
+  }
+  
+  function enemyAttack(enemy) {
+    let damage = Math.max(0, enemy.attack - player.defense);
+    player.health -= damage;
+  
+    console.log(`Enemy dealt ${damage} damage. Your health: ${player.health}`);
+    if (player.health <= 0) {
+      console.log("You were defeated...");
+    }
+  
+    updateUI();
+  }
+  
+  // Experience and Leveling
+  function gainExperience(xp) {
+    player.experience += xp;
+    if (player.experience >= 100) {
+      player.experience -= 100;
+      player.level++;
+      player.attack += 5;
+      player.defense += 3;
+      player.health += 20;
+      console.log(`Level up! New level: ${player.level}`);
+    }
+    savePlayerData(auth.currentUser.uid);
+    updateUI();
+  }
+  
+  // Inventory
+  function addItemToInventory(item) {
+    player.inventory.push(item);
+    console.log(`${item} added to inventory.`);
+    savePlayerData(auth.currentUser.uid);
+    updateUI();
+  }
+  
