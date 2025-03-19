@@ -182,10 +182,10 @@ const inventoryList = document.getElementById("inventoryList");
     const itemDoc = await getDoc(doc(db, itemRef));
     if (itemDoc.exists()) {
       const item = itemDoc.data();
-      player.inventory.push({ ...item, path: itemRef }); // Store as object with path
+      player.inventory.push(item); // Store as object
       console.log(`${item.name} added to inventory.`);
       if (auth.currentUser) {
-        await savePlayerData(auth.currentUser.uid);
+        savePlayerData(auth.currentUser.uid);
       } else {
         console.error("No user signed in. Cannot save player data.");
       }
