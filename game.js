@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
   
 const firebaseConfig = {
     apiKey: "AIzaSyChIO5CyxhiZiU0t6vtqndi6lKsWnoja8E",
@@ -21,13 +21,15 @@ const auth = getAuth();
   
   
   
-  // DOM Elements
-  const authContainer = document.getElementById("authContainer");
-  const signInButton = document.getElementById("signInButton");
-  const signOutButton = document.getElementById("signOutButton");
-  const ui = document.getElementById("ui");
-  const playerStats = document.getElementById("playerStats");
-  const inventoryList = document.getElementById("inventoryList");
+// DOM Elements
+const authContainer = document.getElementById("authContainer");
+const signInButton = document.getElementById("signInButton");
+const signOutButton = document.getElementById("signOutButton");
+const ui = document.getElementById("ui");
+const playerStats = document.getElementById("playerStats");
+const inventoryList = document.getElementById("inventoryList");
+  
+
   
   let player = {
     health: 100,
@@ -40,9 +42,9 @@ const auth = getAuth();
   
   // Authentication
   signInButton.addEventListener("click", async () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
+    const provider = new GoogleAuthProvider();
     try {
-      await auth.signInWithPopup(provider);
+      await signInWithPopup(provider);
       console.log("Signed in!");
     } catch (error) {
       console.error("Error signing in:", error);
