@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
   
 const firebaseConfig = {
@@ -82,22 +82,22 @@ const inventoryList = document.getElementById("inventoryList");
   
   // Load Player Data
   async function loadPlayerData(uid) {
-    const docRef = db.collection("players").doc(uid);
-    const docSnap = await docRef.get();
-    if (docSnap.exists) {
+    const docRef = doc(db, "players", uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
       const data = docSnap.data();
       player = { ...player, ...data };
       console.log("Player data loaded:", player);
     } else {
       console.log("No player data found. Creating new profile...");
-      await docRef.set(player);
+      await setDoc(docRef, player);
     }
   }
   
   // Save Player Data
   async function savePlayerData(uid) {
-    const docRef = db.collection("players").doc(uid);
-    await docRef.set(player);
+    const docRef = doc(db, "players", uid);
+    await setDoc(docRef, player);
   }
   
   // Update UI
@@ -161,4 +161,3 @@ const inventoryList = document.getElementById("inventoryList");
     savePlayerData(auth.currentUser.uid);
     updateUI();
   }
-  
