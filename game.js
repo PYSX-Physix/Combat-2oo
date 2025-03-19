@@ -43,7 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentSession = null;
   let unsubscribeSessionListener = null;
-  let unsubscribePlayerListener = null;
 
   // Authentication
   signInButton.addEventListener("click", async () => {
@@ -77,18 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
       // Load player data
       await loadPlayerData(user.uid);
       updateUI();
-
-      // Set up real-time listener for player data
-      if (unsubscribePlayerListener) {
-        unsubscribePlayerListener();
-      }
-      const playerRef = doc(db, "players", user.uid);
-      unsubscribePlayerListener = onSnapshot(playerRef, (doc) => {
-        if (doc.exists()) {
-          player = doc.data();
-          updateUI();
-        }
-      });
     } else {
       console.log("No user signed in.");
       signOutButton.style.display = "none";
