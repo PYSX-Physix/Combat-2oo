@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, docRef } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
   
 const firebaseConfig = {
@@ -32,6 +32,7 @@ const inventoryList = document.getElementById("inventoryList");
 
   
   let player = {
+    active_character: "player-default",
     health: 100,
     attack: 10,
     defense: 5,
@@ -87,17 +88,27 @@ const inventoryList = document.getElementById("inventoryList");
     if (docSnap.exists()) {
       const data = docSnap.data();
       player = { ...player, ...data };
+      // Deserialize inventory items
+      player.inventory = player.inventory.map(item => JSON.parse(item));
       console.log("Player data loaded:", player);
     } else {
       console.log("No player data found. Creating new profile...");
-      await setDoc(docRef, player);
+      await setDoc(docRef, {
+        ...player,
+        // Serialize inventory items
+        inventory: player.inventory.map(item => JSON.stringify(item))
+      });
     }
   }
   
   // Save Player Data
   async function savePlayerData(uid) {
     const docRef = doc(db, "players", uid);
-    await setDoc(docRef, player);
+    await setDoc(docRef, {
+      ...player,
+      // Serialize inventory items
+      inventory: player.inventory.map(item => JSON.stringify(item))
+    });
   }
   
   // Update UI
@@ -109,7 +120,10 @@ const inventoryList = document.getElementById("inventoryList");
       Attack: ${player.attack}<br>
       Defense: ${player.defense}
     `;
-    inventoryList.innerHTML = player.inventory.map(item => `<li>${item}</li>`).join("");
+    inventoryList.innerHTML = player.inventory.map(item => {
+      const weapon = JSON.parse(item);
+      return `<li>${weapon.name} (Damage: ${weapon.damage})</li>`;
+    }).join("");
   }
   
   // Combat
@@ -156,8 +170,8 @@ const inventoryList = document.getElementById("inventoryList");
   
   // Inventory
   function addItemToInventory(item) {
-    player.inventory.push(item);
-    console.log(`${item} added to inventory.`);
+    player.inventory.push(JSON.stringify(item));
+    console.log(`${item.name} added to inventory.`);
     savePlayerData(auth.currentUser.uid);
     updateUI();
   }
