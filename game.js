@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -42,6 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   let currentSession = null;
+  let unsubscribeSessionListener = null;
+  let unsubscribePlayerListener = null;
 
   // Authentication
   signInButton.addEventListener("click", async () => {
@@ -75,6 +77,18 @@ document.addEventListener("DOMContentLoaded", () => {
       // Load player data
       await loadPlayerData(user.uid);
       updateUI();
+
+      // Set up real-time listener for player data
+      if (unsubscribePlayerListener) {
+        unsubscribePlayerListener();
+      }
+      const playerRef = doc(db, "players", user.uid);
+      unsubscribePlayerListener = onSnapshot(playerRef, (doc) => {
+        if (doc.exists()) {
+          player = doc.data();
+          updateUI();
+        }
+      });
     } else {
       console.log("No user signed in.");
       signOutButton.style.display = "none";
@@ -138,15 +152,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Update Session Players UI
-  async function updateSessionPlayersUI() {
-    if (currentSession) {
-      const sessionRef = doc(db, "sessions", currentSession);
-      const sessionDoc = await getDoc(sessionRef);
-      if (sessionDoc.exists()) {
-        const sessionData = sessionDoc.data();
-        sessionPlayersList.innerHTML = sessionData.players.map(player => `<li>${player.name}</li>`).join("");
-      }
-    }
+  function updateSessionPlayersUI(sessionData) {
+    sessionPlayersList.innerHTML = sessionData.players.map(player => `<li>${player.name}</li>`).join("");
   }
 
   // Example of adding a weapon to the inventory
@@ -180,7 +187,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     currentSession = joinCode;
     console.log(`Session created with join code: ${joinCode}`);
-    updateSessionPlayersUI();
+
+    // Set up real-time listener for session updates
+    if (unsubscribeSessionListener) {
+      unsubscribeSessionListener();
+    }
+    unsubscribeSessionListener = onSnapshot(sessionRef, (doc) => {
+      if (doc.exists()) {
+        updateSessionPlayersUI(doc.data());
+      }
+    });
   });
 
   // Join an existing session
@@ -194,7 +210,16 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       currentSession = joinCode;
       console.log(`Joined session with join code: ${joinCode}`);
-      updateSessionPlayersUI();
+
+      // Set up real-time listener for session updates
+      if (unsubscribeSessionListener) {
+        unsubscribeSessionListener();
+      }
+      unsubscribeSessionListener = onSnapshot(sessionRef, (doc) => {
+        if (doc.exists()) {
+          updateSessionPlayersUI(doc.data());
+        }
+      });
     } else {
       console.error("Session not found for join code:", joinCode);
     }
